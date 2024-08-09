@@ -1,47 +1,70 @@
+from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 from django.urls import reverse # used to generate URLs by reversing the URL patterns
 import uuid
 
 # Create your models here
 
-class Customer(models.Model):
-    customer_id = models.AutoField(primary_key=True)
-    demographics_id = models.ForeignKey('Demographics', on_delete=models.CASCADE)
-    customer_first_name = models.CharField(max_length=50)
-    customer_last_name = models.CharField(max_length=50)
-    customer_email = models.EmailField(unique=True)
-    customer_phone_number = models.CharField(max_length=12)
+class Profile(models.Model):
+    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE, unique=True)
+    # first_name = models.TextField(max_length=500, null=True, blank=True)
+    # last_name = models.TextField(max_length=500, null=True, blank=True)
+    # email = models.TextField(max_length=500, null=True, blank=True)
+    bio = models.TextField(max_length=500, null=True, blank=True)
+    image = models.ImageField(upload_to="images/profile",
+                              default="images/profile/default.png", null=True)
+    private = models.BooleanField(default=True)
 
-    FACULTY_OR_STAFF_CHOICES = [
-        ('Y', 'Yes'),
-        ('N', 'No'),
-    ]
-    is_faculty_or_staff = models.CharField(max_length=1, choices=FACULTY_OR_STAFF_CHOICES)
+    def __str__(self):
+        return str(self.user)
 
-    def get_full_customer_info(self):
-        return {
-            "customer_id": self.customer_id,
-            "demographics_id": self.demographics_id,
-            "customer_first_name": self.customer_first_name,
-            "customer_last_name": self.customer_last_name,
-            "customer_email": self.customer_email,
-            "customer_phone_number": self.customer_phone_number,
-            "faculty_or_staff": self.get_is_faculty_or_staff_display()
-        }
+# class Customer(models.Model):
+#     customer_id = models.AutoField(primary_key=True)
+#     # mjl 7/30/2024 need to connect registered user to customer account trying foreign key
+#     # https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#extending-user
+#     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+#     # demographics_id = models.ForeignKey('Demographics', on_delete=models.CASCADE)
+#     customer_first_name = models.CharField(max_length=50)
+#     customer_last_name = models.CharField(max_length=50)
+#     customer_email = models.EmailField(unique=True)
+#     customer_phone_number = models.CharField(max_length=12)
+#
+#     FACULTY_OR_STAFF_CHOICES = [
+#         ('Y', 'Yes'),
+#         ('N', 'No'),
+#     ]
+#     is_faculty_or_staff = models.CharField(max_length=1, choices=FACULTY_OR_STAFF_CHOICES)
+
+    # def get_full_customer_info(self):
+    #     return {
+    #         "customer_id": self.customer_id,
+    #         "demographics_id": self.demographics_id,
+    #         "customer_first_name": self.customer_first_name,
+    #         "customer_last_name": self.customer_last_name,
+    #         "customer_email": self.customer_email,
+    #         "customer_phone_number": self.customer_phone_number,
+    #         "faculty_or_staff": self.get_is_faculty_or_staff_display()
+    #     }
 class OrdersHeader(models.Model):
     order_id = models.AutoField(primary_key=True)
-    customer_id = models.ForeignKey('Customer', on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     pickup_location_id = models.ForeignKey('PickupLocation', on_delete=models.CASCADE)
     order_date = models.DateField()
-    order_fill_or_shop = models.CharField(max_length=20)
+    # order_fill_or_shop = models.CharField(max_length=20)  mjl 7/30/2024 updating to list
+    FILL_SHOP_CHOICES = [
+        ('fill','fill'),
+        ('shop','shop'),
+    ]
+    order_fill_or_shop = models.CharField(max_length=4, choices=FILL_SHOP_CHOICES)
 
     IS_BAG_REQUIRED_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
     ]
     is_bag_required = models.CharField(max_length=1, choices=IS_BAG_REQUIRED_CHOICES)
-    order_fulfillment_date = models.DateField()
-
+    # mjl 7/30/2024 adding null allowed so customer can enter new order without fulfillment date
+    order_fulfillment_date = models.DateField(blank=True, null=True)
     ORDER_PICKUP_STATUS_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
@@ -50,7 +73,6 @@ class OrdersHeader(models.Model):
     order_notification_date_1st = models.DateField(blank=True, null=True)
     order_notification_date_2nd = models.DateField(blank=True, null=True)
     order_notification_date_3rd = models.DateField(blank=True, null=True)
-
     ORDER_DIAPERS_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
@@ -66,7 +88,7 @@ class OrdersHeader(models.Model):
     def get_full_ordersheader_info(self):
         return {
             "order_id": self.order_id,
-            "customer_id": self.customer_id,
+            "User_id": self.user_id,
             "pickup_location_id": self.pickup_location_id,
             "order_date": self.order_date,
             "order_fill_or_shop": self.order_fill_or_shop,
@@ -82,18 +104,25 @@ class OrdersHeader(models.Model):
 
 class Demographics(models.Model):
     demographics_id = models.AutoField(primary_key=True)
-    customer_id = models.ForeignKey('Customer', on_delete=models.CASCADE)
-    dependent_id = models.ForeignKey('Dependent', on_delete=models.CASCADE)
-    comment_id = models.ForeignKey('Comment', on_delete=models.CASCADE)
-    customer_secondary_email = models.EmailField(unique=True, null=True)
-    customer_NUID = models.CharField(max_length=20, null=True, default='0')
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    # dependent_id = models.ForeignKey('Dependent', on_delete=models.CASCADE)
+    # comment_id = models.ForeignKey('Comment', on_delete=models.CASCADE)
+    # Changes to our ERD design made these foreign keys not necessary
+    user_secondary_email = models.EmailField(unique=True, null=True, default='None')
+    user_NUID = models.CharField(max_length=20, null=True, default='0')
 
-    CUSTOMER_GRAD_CHOICES = [
+    USER_GRAD_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
     ]
-    customer_grad = models.CharField(max_length=1, choices=CUSTOMER_GRAD_CHOICES)
-    customer_affiliation = models.CharField(max_length=50, null=True)
+    user_grad = models.CharField(max_length=1, choices=USER_GRAD_CHOICES)
+
+    USER_AFFILIATION_CHOICES = [
+        ('1', 'UNO'),
+        ('2', 'UNMC'),
+        ('3', 'MCC'),
+    ]
+    user_affiliation = models.CharField(max_length=1, choices=USER_AFFILIATION_CHOICES, null=True)
 
     IS_INTERNATIONAL_STUDENT_CHOICES = [
         ('Y', 'Yes'),
@@ -107,72 +136,84 @@ class Demographics(models.Model):
     ]
     is_first_gen = models.CharField(max_length=1, choices=IS_FIRST_GEN_CHOICES)
 
-    CUSTOMER_CLASS_STANDING_CHOICES = [
+    USER_CLASS_STANDING_CHOICES = [
         ('1', 'Freshman'),
         ('2', 'Sophomore'),
         ('3', 'Junior'),
         ('4', 'Senior'),
     ]
-    customer_class_standing = models.CharField(max_length=1, choices=CUSTOMER_CLASS_STANDING_CHOICES, null=True)
-    customer_occupation = models.CharField(max_length=50)
-    customer_living_status = models.CharField(max_length=200)
-    customer_transportation = models.CharField(max_length=150)
+    user_class_standing = models.CharField(max_length=1, choices=USER_CLASS_STANDING_CHOICES, null=True)
 
-    CUSTOMER_EMPLOYMENT_CHOICES = [
+    USER_LIVING_STATUS_CHOICES = [
+        ('1', 'Off-Campus - alone'),
+        ('2', 'Off-campus - With Family'),
+        ('3', 'On-Campus'),
+    ]
+    user_living_status = models.CharField(max_length=1, choices=USER_LIVING_STATUS_CHOICES, null=True)
+
+    USER_TRANSPORTATION_CHOICES = [
+        ('1', 'Walking'),
+        ('2', 'Public Transportation'),
+        ('3', 'Car'),
+    ]
+    user_transportation = models.CharField(max_length=1, choices=USER_TRANSPORTATION_CHOICES, null=True)
+
+    USER_EMPLOYMENT_CHOICES = [
+        ('1', 'Part-Time'),
+        ('2', 'Full-Time'),
+        ('3', 'Not Employed'),
+        ('4', 'Unable to Work')
+    ]
+    user_employment = models.CharField(max_length=1, choices=USER_EMPLOYMENT_CHOICES)
+    user_ethnicity = models.CharField(max_length=100)
+    user_age = models.CharField(max_length=2)
+    user_gender_identity = models.CharField(max_length=100)
+
+    USER_MARITAL_STATUS_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
     ]
-    customer_employment = models.CharField(max_length=1, choices=CUSTOMER_EMPLOYMENT_CHOICES)
-    customer_ethnicity = models.CharField(max_length=50)
-    customer_age = models.CharField(max_length=2)
-    customer_gender_identity = models.CharField(max_length=100)
-
-    CUSTOMER_MARITAL_STATUS_CHOICES = [
-        ('Y', 'Yes'),
-        ('N', 'No'),
-    ]
-    customer_marital_status = models.CharField(max_length=1, choices=CUSTOMER_MARITAL_STATUS_CHOICES)
-    customer_household_size = models.CharField(max_length=50)
+    user_marital_status = models.CharField(max_length=1, choices=USER_MARITAL_STATUS_CHOICES)
+    user_household_size = models.CharField(max_length=50)
 
     HAS_DEPENDENTS_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
     ]
     has_dependents = models.CharField(max_length=1, choices=HAS_DEPENDENTS_CHOICES)
-    customer_number_dependents = models.CharField(null=True, max_length=50)
+    user_number_dependents = models.CharField(null=True, max_length=50)
 
-    CUSTOMER_WGEC_CHOICES = [
+    USER_WGEC_CHOICES = [
         ('Y', 'Yes'),
         ('N', 'No'),
     ]
-    customer_wgec = models.CharField(max_length=1, choices=CUSTOMER_WGEC_CHOICES)
-    customer_zip_code = models.CharField(max_length=10)
-    customer_allergies = models.CharField(max_length=50)
+    user_wgec = models.CharField(max_length=1, choices=USER_WGEC_CHOICES)
+    user_zip_code = models.CharField(max_length=10)
+    user_allergies = models.CharField(max_length=50)
 
     def get_full_demographic_info(self):
         return {
-            "customer_id": self.customer_id,
-            "customer_secondary_email": self.customer_secondary_email,
-            "customer_NUID": self.customer_NUID,
-            "customer_grad": self.get_customer_grad_display(),
-            "customer_affiliation": self.customer_affiliation,
+            "cuser_id": self.user_id,
+            "user_secondary_email": self.user_secondary_email,
+            "user_NUID": self.user_NUID,
+            "user_grad": self.get_user_grad_display(),
+            "user_affiliation": self.user_affiliation,
             "is_international_student": self.get_is_international_student_display(),
             "is_first_gen": self.get_is_first_gen_display(),
-            "customer_class_standing": self.get_customer_class_standing_display(),
-            "customer_occupation": self.customer_occupation,
-            "customer_living_status": self.customer_living_status,
-            "customer_transportation": self.customer_transportation,
-            "customer_employment": self.get_customer_employment_display(),
-            "customer_ethnicity": self.customer_ethnicity,
-            "customer_age": self.customer_age,
-            "customer_gender_identity": self.customer_gender_identity,
-            "customer_marital_status": self.get_customer_marital_status_display(),
-            "customer_household_size": self.customer_household_size,
+            "user_class_standing": self.get_user_class_standing_display(),
+            "user_living_status": self.user_living_status,
+            "user_transportation": self.user_transportation,
+            "user_employment": self.get_user_employment_display(),
+            "user_ethnicity": self.user_ethnicity,
+            "user_age": self.user_age,
+            "user_gender_identity": self.user_gender_identity,
+            "user_marital_status": self.get_user_marital_status_display(),
+            "user_household_size": self.user_household_size,
             "has_dependents": self.get_has_dependents_display(),
-            "customer_number_dependents": self.customer_number_dependents,
-            "customer_wgec": self.get_customer_wgec_display(),
-            "customer_zip_code": self.customer_zip_code,
-            "customer_allergies": self.customer_allergies
+            "user_number_dependents": self.user_number_dependents,
+            "user_wgec": self.get_user_wgec_display(),
+            "user_zip_code": self.user_zip_code,
+            "user_allergies": self.user_allergies
         }
 
 class PickupLocation(models.Model):
@@ -196,6 +237,15 @@ class OrderLine(models.Model):
     order_quantity_requested = models.CharField(max_length=100)
     order_notes = models.TextField(null=True, blank=True)
 
+    # class Meta:  # mjl 7/31/2024 hopefully sorts the columns dif when displayed by form
+    #         fields_order = [
+    #             'order_id',
+    #             'order_line_number',
+    #             'product_id',
+    #             'order_quantity_requested',
+    #             'order_notes'
+    #             ]
+
     def get_full_orderline_info(self):
         return {
             "order_id": self.order_id,
@@ -204,6 +254,9 @@ class OrderLine(models.Model):
             "order_quantity_requested": self.order_quantity_requested,
             "order_notes": self.order_notes
         }
+
+
+
 
 class Products(models.Model):
     product_id = models.AutoField(primary_key=True)
@@ -243,6 +296,7 @@ class Staff(models.Model):
 
 class Dependent(models.Model):
     dependent_id = models.AutoField(primary_key=True)
+    demographics_id = models.ForeignKey('Demographics', on_delete=models.CASCADE, null=True)
     dependent_age = models.IntegerField(null=True, blank=True)
 
     def get_full_dependent_info(self):
@@ -253,6 +307,7 @@ class Dependent(models.Model):
 
 class Comment(models.Model):
     comment_id = models.AutoField(primary_key=True)
+    demographics_id = models.ForeignKey('Demographics', on_delete=models.CASCADE, null=True)
     comment_comment = models.TextField(null=True, blank=True)
 
     def get_full_comment_info(self):
@@ -260,3 +315,46 @@ class Comment(models.Model):
             "comment_id": self.comment_id,
             "comment_comment": self.comment_comment
         }
+
+class OrderComment(models.Model):
+    order_comment_id = models.AutoField(primary_key=True)
+    comment_id = models.ForeignKey('Comment', on_delete=models.CASCADE, null=True)
+    order_comment_comment = models.TextField(null=True, blank=True)
+    comment_type = models.CharField(max_length=20, null=True, blank=True)
+
+    def get_full_comment_info(self):
+        return {
+            "order_comment_id": self.order_comment_id,
+            "comment_comment": self.order_comment_comment,
+            "comment_type": self.comment_type,
+            }
+
+# mjl 7/30/2024 trying to get Order form to allow for selection of
+# customer when posting
+# https://www.educba.com/django-foreign-key/
+# from django import forms
+# from .models import Customer
+# class Valueform(forms.ModelForm):
+#     class Meta:
+#         model = Customer
+#         fields = "__all__"
+
+# this is for the order fulfillment page
+class Order(models.Model):
+    PACKING = 'For Packing'
+    PICKUP = 'For Pickup'
+    RETURNS = 'Returns'
+
+    ORDER_STATUS_CHOICES = [
+        (PACKING, 'For Packing'),
+        (PICKUP, 'For Pickup'),
+        (RETURNS, 'Returns'),
+    ]
+
+    order_id = models.AutoField(primary_key=True)
+    status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default=PACKING)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Order {self.order_id} - {self.status}"

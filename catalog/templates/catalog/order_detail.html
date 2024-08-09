@@ -1,0 +1,45 @@
+<!-- templates/catalog/order_detail.html -->
+{% extends "catalog/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h2>Order Details</h2>
+
+    <h3>Order Information</h3>
+    <ul>
+        <li><strong>Order ID:</strong> {{ order.order_id }}</li>
+        <li><strong>User:</strong> {{ order.user_id.username }}</li>
+        <li><strong>Pickup Location:</strong> {{ order.pickup_location_id.pickup_location_name }}</li>
+        <li><strong>Order Date:</strong> {{ order.order_date }}</li>
+        <li><strong>Fill or Shop:</strong> {{ order.get_order_fill_or_shop_display }}</li>
+        <li><strong>Bag Required:</strong> {{ order.get_is_bag_required_display }}</li>
+        <li><strong>Fulfillment Date:</strong> {{ order.order_fulfillment_date }}</li>
+        <li><strong>Pickup Status:</strong> {{ order.get_order_pickup_status_display }}</li>
+        <li><strong>Notification Date 1st:</strong> {{ order.order_notification_date_1st }}</li>
+        <li><strong>Notification Date 2nd:</strong> {{ order.order_notification_date_2nd }}</li>
+        <li><strong>Notification Date 3rd:</strong> {{ order.order_notification_date_3rd }}</li>
+        <li><strong>Diapers Required:</strong> {{ order.get_order_diapers_display }}</li>
+        <li><strong>Parent Supplies Required:</strong> {{ order.get_order_parent_supplies_display }}</li>
+    </ul>
+
+    <h3>Order Lines</h3>
+    {% if order.orderline_set.exists %}
+        <ul>
+            {% for line in order.orderline_set.all %}
+                <li>
+                    <strong>Product:</strong> {{ line.product_id.product_name }}<br>
+                    <strong>Line Number:</strong> {{ line.order_line_number }}<br>
+                    <strong>Quantity Requested:</strong> {{ line.order_quantity_requested }}<br>
+                    <strong>Notes:</strong> {{ line.order_notes }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No order lines found for this order.</p>
+    {% endif %}
+
+    <a href="{% url 'order_create' %}">Create New Order</a>
+    <a href="{% url 'order_list' %}">Back to Order List</a>
+{#    breaks site when uncommented. still need to figure out why.#}
+{#    <a href="{% url 'orderlines_create' pk=order.order_id %}">Add New Order Line</a>  <!-- This link assumes you have an 'orderline_create' view for adding lines. -->#}
+{% endblock %}

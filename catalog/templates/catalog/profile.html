@@ -1,0 +1,42 @@
+{% extends "catalog/base.html" %}
+{% load static %} 
+
+{% block content %}
+    <h1>User Profile</h1>
+    
+    <h2>Basic Information</h2>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>First Name:</strong> {{ user.first_name }}</p>
+    <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+    
+    <h2>Profile Information</h2>
+    <p><strong>Bio:</strong> {{ profile.bio }}</p>
+    <p><strong>Profile Image:</strong> <img src="{{ profile.image.url }}" alt="Profile Image"></p>
+    <p><strong>Private:</strong> {{ profile.private }}</p>
+    
+    <h2>Demographics Information</h2>
+    <p><strong>Secondary Email:</strong> {{ demographics.user_secondary_email }}</p>
+    <p><strong>NUID:</strong> {{ demographics.user_NUID }}</p>
+    <p><strong>Graduate:</strong> {{ demographics.get_user_grad_display }}</p>
+    <p><strong>Affiliation:</strong> {{ demographics.user_affiliation }}</p>
+    <p><strong>International Student:</strong> {{ demographics.get_is_international_student_display }}</p>
+    <p><strong>First Generation:</strong> {{ demographics.get_is_first_gen_display }}</p>
+    <p><strong>Class Standing:</strong> {{ demographics.get_user_class_standing_display }}</p>
+    <p><strong>Occupation:</strong> {{ demographics.user_occupation }}</p>
+    <p><strong>Living Status:</strong> {{ demographics.user_living_status }}</p>
+    <p><strong>Transportation:</strong> {{ demographics.user_transportation }}</p>
+    <p><strong>Employment:</strong> {{ demographics.get_user_employment_display }}</p>
+    <p><strong>Ethnicity:</strong> {{ demographics.user_ethnicity }}</p>
+    <p><strong>Age:</strong> {{ demographics.user_age }}</p>
+    <p><strong>Gender Identity:</strong> {{ demographics.user_gender_identity }}</p>
+    <p><strong>Marital Status:</strong> {{ demographics.get_user_marital_status_display }}</p>
+    <p><strong>Household Size:</strong> {{ demographics.user_household_size }}</p>
+    <p><strong>Dependents:</strong> {{ demographics.get_has_dependents_display }}</p>
+    <p><strong>Number of Dependents:</strong> {{ demographics.user_number_dependents }}</p>
+    <p><strong>WGEC:</strong> {{ demographics.get_user_wgec_display }}</p>
+    <p><strong>Zip Code:</strong> {{ demographics.user_zip_code }}</p>
+    <p><strong>Allergies:</strong> {{ demographics.user_allergies }}</p>
+    
+    <a href="{% url 'edit_profile' %}">Edit Profile</a>
+{% endblock %}

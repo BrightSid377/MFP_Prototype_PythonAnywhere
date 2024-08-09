@@ -1,0 +1,36 @@
+{% extends "catalog/base.html" %} 
+{% block content %} 
+    <h1>Staff List</h1> 
+    {% if messages %} 
+        {% for message in messages %} 
+            <div class="alert alert-warning alert-dismissible fade show" role="alert"> 
+                {{ message }} 
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> 
+            </div> 
+ 
+        {% endfor %} 
+    {% endif %} 
+    {% if staff_list %} 
+        <table class="table table-bordered"> 
+            {% for staff in staff_list %} 
+                <tr class="table-secondary"> 
+                    <td>{{ staff.staff_first_name }} {{ staff.staff_last_name }}</td> 
+ 
+                    {% if user.is_superuser %} 
+                        <!--{% if staff.staff_set.all %} 
+                            <td>Books Exist - Cannot delete author</td> 
+                        {% else %} -->
+                        <td><a href="{% url 'staff_delete' pk=staff.pk %}" 
+                               onclick="return confirm('Are you sure you want to delete?')" 
+                               class="btn btn-danger">Delete</a> 
+                        </td> 
+                        <!--{% endif %} -->
+                        <td><a href="{% url 'staff_update' pk=staff.pk %}" class="btn btn-primary">Edit Staff</a></td> 
+                    {% endif %} 
+                </tr> 
+            {% endfor %} 
+        </table> 
+    {% else %} 
+        <p>There are no Staff.</p> 
+    {% endif %} 
+{% endblock %}

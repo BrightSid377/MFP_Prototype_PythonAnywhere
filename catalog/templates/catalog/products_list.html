@@ -1,0 +1,36 @@
+{% extends "catalog/base.html" %} 
+{% block content %} 
+    <h1>Products List</h1> 
+    {% if messages %} 
+        {% for message in messages %} 
+            <div class="alert alert-warning alert-dismissible fade show" role="alert"> 
+                {{ message }} 
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> 
+            </div> 
+ 
+        {% endfor %} 
+    {% endif %} 
+    {% if products_list %} 
+        <table class="table table-bordered"> 
+            {% for products in products_list %} 
+                <tr class="table-secondary"> 
+                    <td>{{ products.product_name }} </td> 
+                    <td>{{ products.product_quantity }}</td>
+                    {% if user.is_superuser %} 
+                        <!--{% if Products.products_set.all %} 
+                            <td>Books Exist - Cannot delete author</td> 
+                        {% else %} -->
+                        <td><a href="{% url 'products_delete' pk=products.pk %}" 
+                               onclick="return confirm('Are you sure you want to delete?')" 
+                               class="btn btn-danger">Delete</a> 
+                        </td> 
+                        <!--{% endif %} -->
+                        <td><a href="{% url 'products_update' pk=products.pk %}" class="btn btn-primary">Edit Products</a></td> 
+                    {% endif %} 
+                </tr> 
+            {% endfor %} 
+        </table> 
+    {% else %} 
+        <p>There are no Products.</p> 
+    {% endif %} 
+{% endblock %}
