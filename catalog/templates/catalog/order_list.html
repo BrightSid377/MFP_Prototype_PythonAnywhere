@@ -1,0 +1,16 @@
+{% extends "catalog/base.html" %}
+ 
+{% block content %} 
+  <h1>Order List</h1>
+  {% if order_list %}
+  <ul> 
+    {% for order in order_list %}
+      <li> 
+        <a href="#">{{ order.order_id }}</a> ({{order.order_pickup_status}})
+      </li> 
+    {% endfor %} 
+  </ul> 
+  {% else %} 
+    <p>There are no orders in the pantry.</p>
+  {% endif %} 
+{% endblock %} 
