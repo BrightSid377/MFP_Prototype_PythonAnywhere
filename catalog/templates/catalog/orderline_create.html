@@ -9,9 +9,15 @@
     {{ form.management_form }}
     {% for form in form %}
       {{ form.as_p }}
+    <!--mjl 8/13 trying to show list of products being selected -->    
+    <!--p>{ form.product_id.product_name }} { form.order_quantity_requested }}</p-->
+        
     {% endfor %}
     <button type="submit" name="action" value="add_and_stay">Add Product and Continue</button>
-    <button type="submit" name="action" value="submit_and_redirect">Submit and View Order</button>
+    <p></p>
+    <p>Select from our available products above.  Once you've selected all the products you want hit this button: </p>
+    <p></p>
+    <button type="submit" name="action" value="submit_and_redirect">Complete Order</button>
   </form>
     
 {% endblock %}

@@ -28,9 +28,9 @@
             {% for line in order.orderline_set.all %}
                 <li>
                     <strong>Product:</strong> {{ line.product_id.product_name }}<br>
-                    <strong>Line Number:</strong> {{ line.order_line_number }}<br>
+                    <!--strong>Line Number:</strong> {{ line.order_line_number }}<br-->  <!--mjl 8/13-->
                     <strong>Quantity Requested:</strong> {{ line.order_quantity_requested }}<br>
-                    <strong>Notes:</strong> {{ line.order_notes }}
+                    <!--strong>Notes:</strong> {{ line.order_notes }} -->
                 </li>
             {% endfor %}
         </ul>

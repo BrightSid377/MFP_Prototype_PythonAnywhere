@@ -57,7 +57,8 @@ class ProfileForm(forms.ModelForm):
 class OrderCreateForm(forms.ModelForm):
     products = forms.ModelMultipleChoiceField(
         queryset=Products.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        # widget=forms.CheckboxSelectMultiple ,
+        widget=forms.HiddenInput(),  # mjl 8/13/2024 will this hide on Order Header page?
         required=False
     )
     quantities = forms.CharField(

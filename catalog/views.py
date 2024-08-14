@@ -152,6 +152,7 @@ class OrderLineCreate(LoginRequiredMixin, FormView):
         order_header = OrdersHeader.objects.get(pk=self.kwargs['pk'])
         # creates each OrderLine instance
         order_lines = form.save(commit=False)
+
         for order_line in order_lines:
             order_line.order = order_header
             order_line.save()
@@ -175,13 +176,13 @@ class ProductsUpdate(UpdateView):
     model = Products
     fields = ['product_name', 'product_description', 'product_availability','product_quantity']
     def get_success_url(self):
-        return reverse('order_list') # redirects customer to page after commiting change
+        return reverse('products_list') # redirects customer to page after commit, mjl 8/13 changed from order to products_list
 
 class ProductsCreate(CreateView):
     model = Products
     fields = ['product_name', 'product_description', 'product_availability','product_quantity']
     def get_success_url(self):
-        return reverse('order_list')  # redirects customer to page after commiting change
+        return reverse('products_list')  # redirects customer to page after commit, mjl 8/13 changed from order to products_list
 
 class ProductsListView(LoginRequiredMixin,generic.ListView):
     model = Products
@@ -193,20 +194,20 @@ class StaffUpdate(UpdateView):
     model = Staff
     fields = ['staff_first_name', 'staff_last_name', 'staff_position']
     def get_success_url(self):
-        return reverse('order_list')  # redirects customer to page after commiting change
+        return reverse('staff_list')  # redirects customer to page after commit, mjl 8/13 changed from order to staff_list
 
 class StaffCreate(CreateView):
     model = Staff
     fields = ['staff_first_name', 'staff_last_name', 'staff_position']
     def get_success_url(self):
-        return reverse('order_list')  # redirects customer to page after commiting change
+        return reverse('staff_list')  # redirects customer to page after commit, mjl 8/13 changed from order to staff_list
 
 class StaffListView(LoginRequiredMixin,generic.ListView):
     model = Staff
     template_name = 'catalog/staff_list.html'
     paginate_by = 10
-    def __str__(self):
-        return self
+    # def __str__(self):    # mjl 8/13/2024 removing, seems to prompt user of recent alerts
+    #     return self
 
 # mjl 7/30/2024 trying to allow customer to be chosen during order entry
 # https://www.educba.com/django-foreign-key/

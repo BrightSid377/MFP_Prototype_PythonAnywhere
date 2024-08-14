@@ -59,14 +59,14 @@ class OrdersHeader(models.Model):
     order_date = models.DateField()
     # order_fill_or_shop = models.CharField(max_length=20)  mjl 7/30/2024 updating to list
     FILL_SHOP_CHOICES = [
-        ('fill','fill'),
-        ('shop','shop'),
+        ('fill','Please pack my order for me'),
+        ('shop',"I'll shop in store"),
     ]
     order_fill_or_shop = models.CharField(max_length=4, choices=FILL_SHOP_CHOICES)
 
     IS_BAG_REQUIRED_CHOICES = [
-        ('Y', 'Yes'),
-        ('N', 'No'),
+        ('Y', 'Yes please bag for me'),
+        ('N', "No I'll bring my own"),
     ]
     is_bag_required = models.CharField(max_length=1, choices=IS_BAG_REQUIRED_CHOICES)
     # mjl 7/30/2024 adding null allowed so customer can enter new order without fulfillment date
@@ -216,7 +216,7 @@ class Demographics(models.Model):
     user_number_dependents = models.CharField(null=True, max_length=50)
 
     USER_WGEC_CHOICES = [
-        ('Y', 'Yes'),
+        ('Y', 'Affiliated with WGEC'),
         ('N', 'No'),
     ]
     user_wgec = models.CharField(max_length=1, choices=USER_WGEC_CHOICES)
@@ -326,13 +326,15 @@ class Staff(models.Model):
     staff_last_name = models.CharField(max_length=50)
     staff_position = models.CharField(max_length=50)
 
-    def get_full_staff_info(self):
-        return {
-            "staff_id": self.staff_id,
-            "staff_first_name": self.staff_first_name,
-            "staff_last_name": self.staff_last_name,
-            "staff_position": self.staff_position
-        }
+    def __str__(self):
+        return self.staff_first_name # mjl 8/13/2024 to prevent ID showing on update screen, show name instead
+    # def get_full_staff_info(self):
+    #     return {
+    #         "staff_id": self.staff_id,
+    #         "staff_first_name": self.staff_first_name,
+    #         "staff_last_name": self.staff_last_name,
+    #         "staff_position": self.staff_position
+    #     }
 
 
 class Dependent(models.Model):
