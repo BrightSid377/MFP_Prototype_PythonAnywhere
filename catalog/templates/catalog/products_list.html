@@ -20,10 +20,11 @@
                         <!--{% if Products.products_set.all %} 
                             <td>Books Exist - Cannot delete author</td> 
                         {% else %} -->
-                        <td><a href="{% url 'products_delete' pk=products.pk %}" 
+                        <!-- mjl 8/10/2024 teacher requested this be removed should not allow delete -->
+                        <!--td><a href="{% url 'products_delete' pk=products.pk %}" 
                                onclick="return confirm('Are you sure you want to delete?')" 
                                class="btn btn-danger">Delete</a> 
-                        </td> 
+                        </td--> 
                         <!--{% endif %} -->
                         <td><a href="{% url 'products_update' pk=products.pk %}" class="btn btn-primary">Edit Products</a></td> 
                     {% endif %} 

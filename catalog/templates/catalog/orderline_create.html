@@ -1,0 +1,17 @@
+<!-- templates/catalog/orderline_form.html -->
+{% extends "catalog/base.html" %}
+
+{% block content %}
+    
+  <h2>Add Products to Order</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.management_form }}
+    {% for form in form %}
+      {{ form.as_p }}
+    {% endfor %}
+    <button type="submit" name="action" value="add_and_stay">Add Product and Continue</button>
+    <button type="submit" name="action" value="submit_and_redirect">Submit and View Order</button>
+  </form>
+    
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "catalog/base.html" %}
+{% block content %}
+    
+    
+    <h2>Orders</h2>
+
+    {% if order_fulfillment %} 
+        <table class="table table-bordered">
+            <tr class="table-secondary"> 
+                    <th>Order ID</th> 
+                    <th>Order Date</th>
+                    <th>Staff</th> 
+                    <!--th>Notes</th-->
+                    <th>Fill Date</th> 
+                    <th>PickUp</th>
+                    <th>Update</th>
+            </tr>
+            
+        {% for order in order_fulfillment.all %}
+            <tr class="table-secondary"> 
+                    <td>{{ order.order_id }} </td> 
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.staff_id.staff_first_name }} </td> 
+                    <!--td>{ order.staff_id }} </td--> 
+                    <!--td>{ order.order_notes }}</td-->
+                    <td>{{ order.order_fulfillment_date }} </td> 
+                    <td>{{ order.order_pickup_status }}</td>
+            {% if user.is_superuser %} 
+                    <td><a href="{% url 'fulfillment_update' pk=order.pk %}" class="btn btn-primary">Edit Order</a></td> 
+            {% endif %}
+            </tr>
+        {% empty %}
+            <p>There are no orders.</p>
+        {% endfor %}
+        
+        </table>
+    {% else %} 
+        <p>There are no orders.</p> 
+    {% endif %}
+    
+{% endblock %}

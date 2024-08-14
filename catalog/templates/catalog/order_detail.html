@@ -40,6 +40,5 @@
 
     <a href="{% url 'order_create' %}">Create New Order</a>
     <a href="{% url 'order_list' %}">Back to Order List</a>
-{#    breaks site when uncommented. still need to figure out why.#}
-{#    <a href="{% url 'orderlines_create' pk=order.order_id %}">Add New Order Line</a>  <!-- This link assumes you have an 'orderline_create' view for adding lines. -->#}
+{#    <a href="{% url 'orderline_create' pk=order.order_id %}">Add Food Item</a> #}
 {% endblock %}

@@ -1,14 +1,14 @@
+from django.utils import timezone
 from django.urls import reverse_lazy
-
 from .models import (OrdersHeader,Products, Staff, User, OrderLine, Order)
 #, Valueform)
 from django.shortcuts import render, reverse, resolve_url, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect
-from .forms import DemographicsForm, OrderCreateForm
+from .forms import DemographicsForm, OrderCreateForm, OrderLineFormSet
 from django.views import generic
 from django.views.generic.detail import DetailView
 from .forms import OrderLineForm
@@ -57,52 +57,79 @@ def index(request):
 #         return reverse('orderline_create') # redirects customer to page after commiting change
 #     # should have this redirect to order details to continue entries
 
+class FulfillmentView(LoginRequiredMixin, ListView):
+    model = OrdersHeader
+    template_name = 'catalog/order_fulfillment.html'
+    context_object_name = 'order_fulfillment'
+    paginate_by = 10
+    # def get_queryset(self):
+    #     # Filter orders for those without a fulfillment date
+    #     return OrdersHeader.objects.filter(order_fulfillment_date__isnull=True).order_by('-order_date')
+
+    # mjl 8/10/2024 trying this to resolve screen showing staff ID and not staff name
+    # https://stackoverflow.com/questions/71692499/django-foreign-key-display-values-in-detail-view
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     staff_obj = self.object.staff # this contain the object that the view is operating upon
+    #     context['items'] = staff_obj # don't forget this also
+    #     # Get all items/Stavke related to the work order/Radni_nalozi
+    #     # context['items'] = Staff.objects.filter(Rn=order_obj)
+    #     return context
+    # mjl 8/10/2024 following borrowed from Andrew's work below on OrderHeader/line
+    # def get_context_data(self, **kwargs):
+    #     self.object = self.get_object()  # assign the object to the view
+    #     context = super().get_context_data(**kwargs)
+    #     context['staff'] = self.object.staff_set.all()
+    #     return context
+
+
+
+
+class FulfillmentUpdate(UpdateView):
+    model = OrdersHeader
+    context_object_name = 'fulfillment_update'
+    fields = ['order_id', 'order_date', 'staff_id','order_fulfillment_date','order_pickup_status']
+    def get_success_url(self):
+        return reverse('fulfillment')  # redirects customer to page after commiting change
+
+
+
 class OrdersListView(LoginRequiredMixin, ListView):
     model = OrdersHeader
     template_name = 'catalog/order_list.html'
     context_object_name = 'orders'
     paginate_by = 10
     def get_queryset(self):
-        # Filter orders by the logged-in user
+        # filters orders by the logged-in user
         return OrdersHeader.objects.filter(user_id=self.request.user).order_by('-order_date')
 
 class OrderCreate(LoginRequiredMixin, CreateView):
     model = OrdersHeader
     form_class = OrderCreateForm
     template_name = 'catalog/order_create.html'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # Fetch the last order of the current user
+        last_order = OrdersHeader.objects.filter(user=self.request.user).order_by('-order_date').first()
+        if last_order:
+            # Preload form fields with the last order's values
+            initial['pickup_location_id'] = last_order.pickup_location_id
+            initial['order_fill_or_shop'] = last_order.order_fill_or_shop
+            initial['is_bag_required'] = last_order.is_bag_required
+            initial['order_diapers'] = last_order.order_diapers
+            initial['order_parent_supplies'] = last_order.order_parent_supplies
+            initial['order_notes'] = last_order.order_notes
+        initial['order_date'] = timezone.now().date()
+
+        return initial
     def form_valid(self, form):
-        # Automatically assign the current user to the order
-        form.instance.user_id = self.request.user
-
+        form.instance.user = self.request.user  # this automatically assign the current user to the order
         response = super().form_valid(form)
-
-        # Create OrderLine instances
-        # self.create_order_lines(form)
-
         return response
-    # didn't end up needing but might utilize in a later update.
-    # def create_order_lines(self, form):
-    #     # Extract product IDs and quantities
-    #     products = form.cleaned_data.get('products')
-    #     quantities = form.cleaned_data.get('quantities')
-    #
-    #     if products and quantities:
-    #         quantities = quantities.split(',')
-    #
-    #         # Create each OrderLine instance
-    #         for product, quantity in zip(products, quantities):
-    #             OrderLine.objects.create(
-    #                 order_id=self.object,  # Link the OrderLine to the created OrdersHeader instance
-    #                 product_id=product,
-    #                 order_line_number=f'{self.object.order_id:03}',  # You might want to generate a unique line number
-    #                 order_quantity_requested=quantity,
-    #                 order_notes=''  # Or include logic for handling notes if provided
-    #             )
-
     def get_success_url(self):
-        # Redirect to the order details page after creation
-        return reverse('order_detail', kwargs={'pk': self.object.pk})
-
+        # Redirect to the order line creation page after creating the OrdersHeader
+        return reverse('orderline_create', kwargs={'pk': self.object.pk})
 
 class OrderDetailView(LoginRequiredMixin, DetailView):
     model = OrdersHeader
@@ -110,25 +137,39 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'order'
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['order_lines'] = self.object.orderline_set.all()  # Fetch related order lines
+        context['order_lines'] = self.object.orderline_set.all()
         return context
 
-class OrderLineCreateView(CreateView):
-    model = OrderLine
-    form_class = OrderLineForm
-    template_name = 'catalog/orderlines_form.html'  # Template for creating an order line
-
+class OrderLineCreate(LoginRequiredMixin, FormView):
+    template_name = 'catalog/orderline_create.html'
+    form_class = OrderLineFormSet
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['queryset'] = OrderLine.objects.none()  # used to only show empty forms, not existing OrderLines
+        return kwargs
     def form_valid(self, form):
-        # Set the order_id from the URL parameter
-        form.instance.order_id = OrdersHeader.objects.get(pk=self.kwargs['order_pk'])
-        return super().form_valid(form)
-
+        # Retrieve the order header instance
+        order_header = OrdersHeader.objects.get(pk=self.kwargs['pk'])
+        # creates each OrderLine instance
+        order_lines = form.save(commit=False)
+        for order_line in order_lines:
+            order_line.order = order_header
+            order_line.save()
+            # the orderline feature still experiencing some bugs need to work on solution to correctly assign
+            # an orderline
+            order_line.order_line_number = order_line.pk
+            order_line.save()
+        # redirects depending on which button was clicked
+        action = self.request.POST.get('action')
+        if action == 'submit_and_redirect':
+            return redirect(reverse('order_detail', kwargs={'pk': order_header.pk}))
+        else:
+            return redirect(reverse('orderline_create', kwargs={'pk': order_header.pk}))
     def get_success_url(self):
-        # Redirect to the order detail page after creation
-        return reverse_lazy('order_detail', kwargs={'pk': self.kwargs['order_pk']})
+        # redirects users to the order details page after adding products
+        return reverse('order_detail', kwargs={'pk': self.kwargs['pk']})
 
 # mjl 7/31/2024 adding staff and product entry views
-
 
 class ProductsUpdate(UpdateView):
     model = Products
@@ -164,6 +205,8 @@ class StaffListView(LoginRequiredMixin,generic.ListView):
     model = Staff
     template_name = 'catalog/staff_list.html'
     paginate_by = 10
+    def __str__(self):
+        return self
 
 # mjl 7/30/2024 trying to allow customer to be chosen during order entry
 # https://www.educba.com/django-foreign-key/
@@ -258,7 +301,6 @@ def demographics_form(request):
             return redirect('index')  # Adjust redirect as needed
     else:
         form = DemographicsForm(user=request.user)
-
     return render(request, 'demographics_form.html', {'form': form})
 
 #ar 8/05/2024 adding profile edit view
@@ -296,7 +338,7 @@ def edit_profile(request):
         'demographics_form': demographics_form
     })
 
-def orders(request):
+def orders_list(request):
     packing_orders = Order.objects.filter(status=Order.PACKING)
     current_orders = Order.objects.filter(status=Order.PICKUP)
     old_orders = Order.objects.filter(status=Order.RETURNS)

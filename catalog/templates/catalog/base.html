@@ -24,9 +24,11 @@
                 <li class="nav-item"> 
                     <a class="nav-link" href="{% url 'index' %}">Home</a> 
                 </li> 
+                {% if not user.is_authenticated %}
                 <li class="nav-item"> 
                     <a class="nav-link" href="{% url 'register' %}"> Sign Up Now</a> 
                 </li> 
+                {% endif %}
                 <!--li class="nav-item"--> 
                     <!--a class="nav-link" href="#">Log In</a-->
                 <!--/li-->
@@ -36,11 +38,12 @@
                 <li><a class="nav-link" href="{% url 'order_create' %}">New Order</a></li>
                 {% endif %} 
                 
-                {% if user.is_superuser %} 
+                {% if user.is_superuser or user.is_staff%}
                 <li class="nav-item dropdown"> 
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" 
                     aria-expanded="false">Manager Menu</a> 
                 <ul class="dropdown-menu"> 
+                <li><a class="dropdown-item" href="{% url 'fulfillment' %}">Order Fulfillment</a></li>
                 <li><a class="dropdown-item" href="{% url 'staff_create' %}">Add Staff</a></li> 
                 <li><a class="dropdown-item" href="{% url 'staff_list' %}">Edit Staff</a></li> 
                 <li><a class="dropdown-item" href="{% url 'products_create' %}">Add Product</a></li> 

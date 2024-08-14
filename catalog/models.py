@@ -48,7 +48,13 @@ class Profile(models.Model):
     #     }
 class OrdersHeader(models.Model):
     order_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # mjl 8/10/2024 adding join to staff so we can assign them to orders
+    staff_id = models.ForeignKey('Staff', null = True, on_delete=models.CASCADE)
+    # @property  # mjl 8/10/2024 trying this in place of above code
+    # def staff_id(self):
+    #         return f"{self.staff_id.staff_first_name}"
+
     pickup_location_id = models.ForeignKey('PickupLocation', on_delete=models.CASCADE)
     order_date = models.DateField()
     # order_fill_or_shop = models.CharField(max_length=20)  mjl 7/30/2024 updating to list
@@ -84,11 +90,13 @@ class OrdersHeader(models.Model):
         ('N', 'No'),
     ]
     order_parent_supplies = models.CharField(max_length=1, choices=ORDER_PARENT_SUPPLIES_CHOICES)
-
+    # mjl 8/10/2024 moved up from orderline
+    order_notes = models.TextField(null=True, blank=True)
     def get_full_ordersheader_info(self):
         return {
             "order_id": self.order_id,
             "User_id": self.user_id,
+            "staff_id": self.staff_id,
             "pickup_location_id": self.pickup_location_id,
             "order_date": self.order_date,
             "order_fill_or_shop": self.order_fill_or_shop,
@@ -99,7 +107,8 @@ class OrdersHeader(models.Model):
             "order_notification_date_2nd": self.order_notification_date_2nd,
             "order_notification_date_3rd": self.order_notification_date_3rd,
             "order_diapers": self.get_order_diapers_display(),
-            "order_parent_supplies": self.get_order_parent_supplies_display()
+            "order_parent_supplies": self.get_order_parent_supplies_display(),
+            "order_notes": self.order_notes
         }
 
 class Demographics(models.Model):
@@ -144,6 +153,9 @@ class Demographics(models.Model):
     ]
     user_class_standing = models.CharField(max_length=1, choices=USER_CLASS_STANDING_CHOICES, null=True)
 
+    # mjl 8/10/2024 adding occupation field
+    user_occupation = models.CharField(max_length=100, null=True)
+
     USER_LIVING_STATUS_CHOICES = [
         ('1', 'Off-Campus - alone'),
         ('2', 'Off-campus - With Family'),
@@ -165,9 +177,29 @@ class Demographics(models.Model):
         ('4', 'Unable to Work')
     ]
     user_employment = models.CharField(max_length=1, choices=USER_EMPLOYMENT_CHOICES)
-    user_ethnicity = models.CharField(max_length=100)
+
+    # mjl 8/10/2024 updating to a choice field
+    USER_ETHNICITY_CHOICES = [
+        ('1', 'Black or African American'),
+        ('2', 'White or Caucasian'),
+        ('3', 'Hispanic or Latinx'),
+        ('4', 'American Indian or Alaskan'),
+        ('5', 'Asian'),
+        ('6', 'Prefer Not to Say'),
+    ]
+    user_ethnicity = models.CharField(max_length=1, choices=USER_ETHNICITY_CHOICES)
+
     user_age = models.CharField(max_length=2)
-    user_gender_identity = models.CharField(max_length=100)
+
+    # mjl 8/10/2024 updating to a choice field
+    USER_GENDER_CHOICES = [
+        ('1', 'Male'),
+        ('2', 'Female'),
+        ('3', 'Non-Binary'),
+        ('4', 'Trans'),
+        ('5', 'Prefer Not to Say')
+    ]
+    user_gender_identity = models.CharField(max_length=1, choices=USER_GENDER_CHOICES)
 
     USER_MARITAL_STATUS_CHOICES = [
         ('Y', 'Yes'),
@@ -203,6 +235,7 @@ class Demographics(models.Model):
             "user_class_standing": self.get_user_class_standing_display(),
             "user_living_status": self.user_living_status,
             "user_transportation": self.user_transportation,
+            "user_occupation": self.user_occupation, # mjl 8/10/2024 added was missing
             "user_employment": self.get_user_employment_display(),
             "user_ethnicity": self.user_ethnicity,
             "user_age": self.user_age,
@@ -230,12 +263,17 @@ class PickupLocation(models.Model):
             "pickup_location_description": self.pickup_location_description
         }
 
+    def __str__(self):
+        return self.pickup_location_name
+
 class OrderLine(models.Model):
-    order_id = models.ForeignKey('OrdersHeader', on_delete=models.CASCADE)
+    # 8/10 this naming scheme can still be called else where by referencing order_id. do not change breaks order line create function
+    order = models.ForeignKey('OrdersHeader', on_delete=models.CASCADE)
     product_id = models.ForeignKey('Products', on_delete=models.CASCADE)
     order_line_number = models.CharField(max_length=100)
     order_quantity_requested = models.CharField(max_length=100)
-    order_notes = models.TextField(null=True, blank=True)
+    # mjl 8/10/2024 moving to order header
+    # order_notes = models.TextField(null=True, blank=True)
 
     # class Meta:  # mjl 7/31/2024 hopefully sorts the columns dif when displayed by form
     #         fields_order = [
@@ -252,7 +290,6 @@ class OrderLine(models.Model):
             "product_id": self.product_id,
             "order_line_number": self.order_line_number,
             "order_quantity_requested": self.order_quantity_requested,
-            "order_notes": self.order_notes
         }
 
 
@@ -279,6 +316,9 @@ class Products(models.Model):
         "product_quantity": self.product_quantity
 
         }
+    def __str__(self):
+        return self.product_name
+
 
 class Staff(models.Model):
     staff_id = models.AutoField(primary_key=True)
@@ -293,6 +333,7 @@ class Staff(models.Model):
             "staff_last_name": self.staff_last_name,
             "staff_position": self.staff_position
         }
+
 
 class Dependent(models.Model):
     dependent_id = models.AutoField(primary_key=True)
