@@ -13,6 +13,7 @@
                     <!--th>Notes</th-->
                     <th>Fill Date</th> 
                     <th>PickUp</th>
+                    <th>View</th>
                     <th>Update</th>
             </tr>
             
@@ -25,8 +26,10 @@
                     <!--td>{ order.order_notes }}</td-->
                     <td>{{ order.order_fulfillment_date }} </td> 
                     <td>{{ order.order_pickup_status }}</td>
-            {% if user.is_superuser %} 
-                    <td><a href="{% url 'fulfillment_update' pk=order.pk %}" class="btn btn-primary">Edit Order</a></td> 
+            {% if user.is_superuser or user.is_staff %} 
+                    <!-- mjl 8/15/2024 adding order view per teacher feedback -->
+                    <td><a href="{% url 'order_detail' pk=order.pk %}" class="btn btn-primary">View</a></td>
+                    <td><a href="{% url 'fulfillment_update' pk=order.pk %}" class="btn btn-primary">Edit Status</a></td> 
             {% endif %}
             </tr>
         {% empty %}

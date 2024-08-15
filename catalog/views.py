@@ -61,7 +61,10 @@ class FulfillmentView(LoginRequiredMixin, ListView):
     model = OrdersHeader
     template_name = 'catalog/order_fulfillment.html'
     context_object_name = 'order_fulfillment'
-    paginate_by = 10
+    # paginate_by = 10
+    # mjl 8/15/2024 wanting to add sort order to fulfillment page
+    ordering = ['staff_id','order_pickup_status','order_fulfillment_date']
+
     # def get_queryset(self):
     #     # Filter orders for those without a fulfillment date
     #     return OrdersHeader.objects.filter(order_fulfillment_date__isnull=True).order_by('-order_date')

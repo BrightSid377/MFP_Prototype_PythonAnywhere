@@ -40,5 +40,11 @@
 
     <a href="{% url 'order_create' %}">Create New Order</a>
     <a href="{% url 'order_list' %}">Back to Order List</a>
+
+    <!-- mjl 8/15/2024 jump from Fulfillment page, need to navigate back for Superusers -->
+    {% if user.is_superuser or user.is_staff %}
+        <td><a href="{% url 'fulfillment' %}" class="btn btn-primary">Back to Fulfillment</a></td>
+    {% endif %}
+
 {#    <a href="{% url 'orderline_create' pk=order.order_id %}">Add Food Item</a> #}
 {% endblock %}
